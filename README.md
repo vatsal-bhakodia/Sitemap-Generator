@@ -1,10 +1,11 @@
 # Sitemap Generator
 
 ![Sitemap Generator Logo](https://github.com/vatsal-bhakodia/Sitemap-Generator/blob/main/assets/logo.png)
-[![Python Version](https://img.shields.io/badge/python-3.x-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
 A Python script to generate a sitemap for a given website by crawling its pages and extracting URLs. The script also includes options for formatting output and handling system shutdowns upon task completion.
+
+[![Python Version](https://img.shields.io/badge/python-3.x-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
 ## Features
 
