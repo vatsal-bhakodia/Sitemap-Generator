@@ -1,5 +1,6 @@
 # Sitemap Generator
 
+![Sitemap Generator Logo](https://github.com/vatsal-bhakodia/Sitemap-Generator/blob/main/assets/logo.png)
 [![Python Version](https://img.shields.io/badge/python-3.x-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
