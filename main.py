@@ -42,47 +42,63 @@ def format_time(elapsed_time):
 def get_links(domain_name, url):
     try:
         response = requests.get(url)
-        response.raise_for_status()  # Raise an HTTPError for bad responses
+        response.raise_for_status()
 
-        # Check if the content type is HTML
         content_type = response.headers.get('Content-Type', '')
         if 'text/html' not in content_type:
-            return  # Skip URLs that do not point to HTML content
+            return  # Skip non-HTML content
 
         html = response.text
         soup = BeautifulSoup(html, 'html.parser')
         raw_links = soup.find_all('a')
-        
+
         global all_links
+        new_links = []  # Store new links found in this iteration
+
         for i in raw_links:
             try:
-                link = i['href']
-                # Convert relative URLs to absolute URLs
-                if not link.startswith('http') and link[0] != '#':
-                    link = urllib.parse.urljoin(url, link)
+                link = i.get('href', '')  # Safely get the href attribute
                 
-                # Remove query parameters from the URL
+                if not link or link.startswith('#'):
+                    continue  # Skip empty and fragment links
+
+                # Convert relative URLs to absolute
+                link = urllib.parse.urljoin(url, link)
+
+                # Remove query parameters
                 link = urllib.parse.urlparse(link)._replace(query='').geturl()
 
-                # Ensure link is a valid web page URL
-                if domain_name in link and link not in set(all_links):
-                    response = requests.head(link, allow_redirects=True)  # Perform a HEAD request
+                # Filter out invalid links
+                if (
+                    domain_name in link and
+                    link not in set(all_links) and
+                    not any(exclude in link for exclude in ["+","/cdn-cgi/","mailto:"])
+                ):
+                    # Check if it's an actual HTML page
+                    response = requests.head(link, allow_redirects=True)
                     if 'text/html' in response.headers.get('Content-Type', ''):
                         all_links.append(link)
-                        with open(f'dump.txt', 'a') as dump:
-                            dump.write(f"[+] {link}\n[REF] {url}\n\n")
-            except KeyError:
-                pass  # Handle cases where 'href' might not exist in the anchor tag
+                        new_links.append(link)
+            except Exception as e:
+                print(Fore.RED + f"Skipping invalid link: {e}" + Style.RESET_ALL)
+
+        # Save referring URL once per batch of links
+        if new_links:
+            with open('dump.txt', 'a') as dump:
+                dump.write(f"[REF] {url}\n")
+                for link in new_links:
+                    dump.write(f"[+] {link}\n")
+                dump.write("\n")
+
     except requests.exceptions.HTTPError as errh:
         print(Fore.RED + f"HTTP Error: {errh} for URL: {url}" + Style.RESET_ALL)
-        with open(f'dump.txt', 'a') as dump:
+        with open('dump.txt', 'a') as dump:
             dump.write(f"HTTP Error: {errh} for URL: {url}\n")
-        # Remove the link from the list if it returns an error
         if url in all_links:
             all_links.remove(url)
     except Exception as e:
         print(Fore.RED + f"An error occurred: {e} for URL: {url}" + Style.RESET_ALL)
-
+        
 def create_sitemap(domain, links):
     date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S+00:00")
     with open(f'{domain}.xml', 'a') as sitemap_file:
@@ -108,7 +124,7 @@ def create_sitemap(domain, links):
 
     print(Fore.GREEN + f'Sitemap is saved by the name of {domain}.xml' + Style.RESET_ALL)
 
-logo = '''   _____ __                      _____                      __          
+logo = r'''   _____ __                      _____                      __          
   / __(_) /____ __ _  ___ ____  / ___/__ ___  ___ _______ _/ /____  ____
  _\ \/ / __/ -_)  ' \/ _ `/ _ \/ (_ / -_) _ \/ -_) __/ _ `/ __/ _ \/ __/
 /___/_/\__/\__/_/_/_/\_,_/ .__/\___/\__/_//_/\__/_/  \_,_/\__/\___/_/   
